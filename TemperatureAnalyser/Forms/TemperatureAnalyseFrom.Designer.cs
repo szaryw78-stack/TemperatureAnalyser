@@ -415,7 +415,6 @@
             new DevExpress.XtraGrid.GridGroupSummaryItem(DevExpress.Data.SummaryItemType.Sum, "Usage", null, "Suma zużycia gazu={0:n2}")});
             this.dgwAvarageTemperaturesView.Name = "dgwAvarageTemperaturesView";
             this.dgwAvarageTemperaturesView.OptionsBehavior.Editable = false;
-            this.dgwAvarageTemperaturesView.RowStyle += new DevExpress.XtraGrid.Views.Grid.RowStyleEventHandler(this.dgwAvarageTemperaturesView_RowStyle);
             // 
             // c1CollectionDatetime
             // 
@@ -845,4 +844,3 @@
         private DevExpress.XtraBars.Ribbon.RibbonPageGroup ribbonPageGroup2;
     }
 }
-

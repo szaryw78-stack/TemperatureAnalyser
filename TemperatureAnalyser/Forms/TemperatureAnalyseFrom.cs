@@ -1,5 +1,6 @@
 ﻿using DevExpress.XtraEditors;
 using DevExpress.XtraEditors.Repository;
+using DevExpress.XtraGrid.Views.Base;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace TemperatureAnalyser
         public Form1()
         {
             InitializeComponent();
+            dgwAvarageTemperaturesView.FocusedRowChanged += dgwAvarageTemperaturesView_FocusedRowChanged;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -158,10 +160,14 @@ namespace TemperatureAnalyser
             var avaragesTem = apc.AvarageTemperatures(temperatures);
             var balance = gi.GetDataImprooveds();
             gasUsage.AddRange(gasUsageBevoreCounterExchange);
+            var averagesByDate = avaragesTem.ToDictionary(item => item.Date.Date, item => item.AvarageDailyTemperature);
             foreach (var i in gasUsage)
             {
-                i.AvarageDailyTemperature = avaragesTem.Where(c => c.Date == i.CollectionDatetime).Select(c => c.AvarageDailyTemperature).FirstOrDefault();
-
+                double average;
+                if (averagesByDate.TryGetValue(i.CollectionDatetime.Date, out average))
+                {
+                    i.AvarageDailyTemperature = average;
+                }
             }
 
             dgwAvarageTemperatures.DataSource = gasUsage.OrderByDescending(i => i.CollectionDatetime).ToList();
@@ -221,15 +227,18 @@ namespace TemperatureAnalyser
         }
 
 
-        private void dgwAvarageTemperaturesView_RowStyle(object sender, DevExpress.XtraGrid.Views.Grid.RowStyleEventArgs e)
+        private void dgwAvarageTemperaturesView_FocusedRowChanged(object sender, FocusedRowChangedEventArgs e)
         {
-            var row = GetSelectedRow(dgwAvarageTemperatures, dgwAvarageTemperaturesView);
+            var row = dgwAvarageTemperaturesView.GetRow(e.FocusedRowHandle) as DataCollector.GasData;
             if (row != null)
             {
                 var data = apc.GasUsageAndPriceCalculation(row.CollectionDatetime);
                 dgwCosts.DataSource = data;
             }
-
+            else
+            {
+                dgwCosts.DataSource = null;
+            }
         }
 
         private void btnClose_ItemClick(object sender, DevExpress.XtraBars.ItemClickEventArgs e)

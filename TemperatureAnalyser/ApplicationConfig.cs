@@ -469,47 +469,15 @@ namespace TemperatureAnalyser
 
         public List<DataCollector.TemperaturesData> AvarageTemperatures(List<DataCollector.TemperaturesData> data)
         {
-            var result = new List<DataCollector.TemperaturesData>();
-
-            DateTime ds1 = DateTime.Now;
-
-            //result = data.OrderBy(i => i.Date).Select(k => new DataCollector.TemperaturesData
-            //{
-            //    Date = k.Date.Date,
-            //    AvarageDailyTemperature = data.Where(p => p.Date == k.Date).Average(p => p.Temperature),
-            //    // AvarageTemeratureAtDay = data.Where(p => p.Date == k.Date && p.TimeSpan >= new TimeSpan(7, 0, 0) && p.TimeSpan <= new TimeSpan(18, 0, 0)).Select(p => p.Temperature).DefaultIfEmpty().Average(),
-            //    // AvarageTemperatureAtNight = data.Where(p => p.Date == k.Date && p.TimeSpan >= new TimeSpan(0, 0, 0) && p.TimeSpan <= new TimeSpan(7, 0, 0) && p.TimeSpan >= new TimeSpan(18, 0, 0) &&
-            //    //   p.TimeSpan <= new TimeSpan(23, 59, 59)).Select(p => p.Temperature).DefaultIfEmpty().Average(),
-
-            //}).GroupBy(e => new { e.Date }).Select(g => g.FirstOrDefault()).ToList();
-
-            DateTime de2 = DateTime.Now;
-            double dif1 = (de2 - ds1).TotalSeconds;
-
-
-            var res1 = new List<DataCollector.TemperaturesData>();
-
-            res1 =  data.OrderBy(i => i.Date).Select(k => new DataCollector.TemperaturesData
-            {
-                Date = k.Date.Date,
-            
-            }).GroupBy(e => new { e.Date }).Select(g => g.FirstOrDefault()).ToList();
-
-
-
-            foreach (var i in res1)
-            {
-                i.AvarageDailyTemperature = data.Where(p => p.Date == i.Date).Average(p => p.Temperature);
-
-            }
-
-            DateTime de3= DateTime.Now;
-            double dif2 = (de3 - de2).TotalSeconds;
-
-
-
-
-            return res1;
+            return data
+                .GroupBy(item => item.Date.Date)
+                .Select(group => new DataCollector.TemperaturesData
+                {
+                    Date = group.Key,
+                    AvarageDailyTemperature = group.Average(item => item.Temperature)
+                })
+                .OrderBy(item => item.Date)
+                .ToList();
         }
         public List<DataCollector.GasData> GetGasUsage()
         {
@@ -973,10 +941,10 @@ namespace TemperatureAnalyser
             {
                 // result = Definition();
                 var prices = GetPrices(datetime).Where(i => i.year == datetime.Year && i.month == datetime.Month).ToList();
-                var gasUsage = GetGasUsage();//.Where(i => i.Month == datetime.Month && datetime.Year == datetime.Year).ToList();
+                var gasUsage = GetGasUsage();
                 var gasUsageBevorCounterExchange = GetGasUsageBevorConterExchange();
                 int daysInMonth = DateTime.DaysInMonth(datetime.Year, datetime.Month);
-                var maxCounterValue = GetGasUsage().Select(i => i.Value).Max();
+                var maxCounterValue = gasUsage.Select(i => i.Value).DefaultIfEmpty().Max();
                 //int currentDayCount = DateTime.Now.Day;
 
                 gasUsage.AddRange(gasUsageBevorCounterExchange);
