@@ -40,7 +40,6 @@
             this.document1 = new DevExpress.XtraBars.Docking2010.Views.Tabbed.Document(this.components);
             this.ribbonControl1 = new DevExpress.XtraBars.Ribbon.RibbonControl();
             this.btnGetTemperatures = new DevExpress.XtraBars.BarButtonItem();
-            this.barButtonItem1 = new DevExpress.XtraBars.BarButtonItem();
             this.btnLoadData = new DevExpress.XtraBars.BarButtonItem();
             this.btnAddGasCounter = new DevExpress.XtraBars.BarButtonItem();
             this.btnClose = new DevExpress.XtraBars.BarButtonItem();
@@ -184,7 +183,6 @@
             this.ribbonControl1.ExpandCollapseItem,
             this.ribbonControl1.SearchEditItem,
             this.btnGetTemperatures,
-            this.barButtonItem1,
             this.btnLoadData,
             this.btnAddGasCounter,
             this.btnClose,
@@ -211,14 +209,6 @@
             this.btnGetTemperatures.ImageOptions.SvgImage = ((DevExpress.Utils.Svg.SvgImage)(resources.GetObject("btnGetTemperatures.ImageOptions.SvgImage")));
             this.btnGetTemperatures.Name = "btnGetTemperatures";
             this.btnGetTemperatures.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.btnGetTemperatures_ItemClick);
-            // 
-            // barButtonItem1
-            // 
-            this.barButtonItem1.Caption = "TEST";
-            this.barButtonItem1.Id = 2;
-            this.barButtonItem1.ImageOptions.SvgImage = ((DevExpress.Utils.Svg.SvgImage)(resources.GetObject("barButtonItem1.ImageOptions.SvgImage")));
-            this.barButtonItem1.Name = "barButtonItem1";
-            this.barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem1_ItemClick);
             // 
             // btnLoadData
             // 
@@ -328,7 +318,6 @@
             this.ribbonPageGroup1.ItemLinks.Add(this.btnGetTemperatures);
             this.ribbonPageGroup1.ItemLinks.Add(this.btnPricesSettings);
             this.ribbonPageGroup1.ItemLinks.Add(this.btnAddVirtualGasCollection);
-            this.ribbonPageGroup1.ItemLinks.Add(this.barButtonItem1);
             this.ribbonPageGroup1.ItemLinks.Add(this.btnClose);
             this.ribbonPageGroup1.Name = "ribbonPageGroup1";
             this.ribbonPageGroup1.Text = "Ogólne";
@@ -802,7 +791,6 @@
         private DevExpress.XtraGrid.Columns.GridColumn c1Temperature;
         private DevExpress.XtraGrid.Columns.GridColumn c2DateAndTime;
         private DevExpress.XtraGrid.Columns.GridColumn c2Temperature;
-        private DevExpress.XtraBars.BarButtonItem barButtonItem1;
         private DevExpress.XtraBars.BarButtonItem btnLoadData;
         private DevExpress.XtraGrid.Columns.GridColumn c1GasUsage;
         private DevExpress.XtraGrid.Columns.GridColumn c1Fireplace;

@@ -41,7 +41,7 @@ namespace TemperatureAnalyser.Forms
 
                 textEdit2.Text = row.Zone1.ToString();
                 textEdit3.Text = row.Zone2.ToString();
-
+                memoNote.Text = row.memoNote;
 
             }
 
@@ -94,12 +94,15 @@ namespace TemperatureAnalyser.Forms
 
                 }
 
-                this.Close();
+                DialogResult = System.Windows.Forms.DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {
 
-                throw ex;
+                XtraMessageBox.Show("Nie udało się zapisać odczytu. " + ex.Message,
+                    "BŁĄD", System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Error);
             }
 
         }

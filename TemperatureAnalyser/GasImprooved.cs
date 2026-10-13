@@ -1,110 +1,60 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SQLite;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TemperatureAnalyser
 {
     public class GasImprooved
     {
-        private SQLiteConnection connection;
-
-        public GasImprooved()
+        private SQLiteConnection CreateConnection()
         {
-            connection = new SQLiteConnection("Data Source = " + AppDomain.CurrentDomain.BaseDirectory + @"Data\baza.db");
+            return new SQLiteConnection("Data Source = " +
+                AppDomain.CurrentDomain.BaseDirectory + @"Data\baza.db");
         }
 
         public List<DataCollector.GasDataImprooved> GetDataImprooveds()
         {
-            var result = new List   <DataCollector.GasDataImprooved>();
-            string cmdText = "SELECT id,realcounter,virtualcounter,createddatetime FROM GasDataCollectionImprooved ";
-            SQLiteDataReader dr = null;
-            try
+            var result = new List<DataCollector.GasDataImprooved>();
+            using (var connection = CreateConnection())
+            using (var command = new SQLiteCommand(
+                "SELECT id,realcounter,virtualcounter,createddatetime FROM GasDataCollectionImprooved",
+                connection))
             {
-                string[] formats = { "yyyy-MM-dd hh:mm:ss", "dd.MM.yyyy hh:mm:ss", "dd.MM.yyyy HH:mm:ss", "yyyy-MM-dd HH:mm:ss" };
-
                 connection.Open();
-                SQLiteCommand select = new SQLiteCommand(cmdText, connection);
-
-                dr = select.ExecuteReader();
-                if (dr.HasRows)
+                using (var reader = command.ExecuteReader())
                 {
-                    while (dr.Read())
+                    while (reader.Read())
                     {
-                        // counter++;
-                        if (dr.GetString(3).Contains('.'))
+                        double realCounter = reader.GetDouble(1);
+                        double virtualCounter = reader.GetDouble(2);
+                        result.Add(new DataCollector.GasDataImprooved
                         {
-
-                        }
-                        // str = dr.GetString(2);
-                        DateTime dt = DateTime.ParseExact(dr.GetString(3),
-                                                    formats,
-                                                    new CultureInfo("pl-PL"),
-                                                    DateTimeStyles.None);
-
-                        var tmp = new DataCollector.GasDataImprooved
-                        {
-                            id = dr.GetInt32(0),
-                            realcounter = dr.GetDouble(1),
-                            virtualcounter = dr.GetDouble(2),
-                            createdDatetime = Convert.ToDateTime(dt), //Convert.ToDateTime(dr.GetString(2),ci),
-                            difference = dr.GetDouble(2)- dr.GetDouble(1)
-
-
-                        };
-                        result.Add(tmp);
-
+                            id = reader.GetInt32(0),
+                            realcounter = realCounter,
+                            virtualcounter = virtualCounter,
+                            createdDatetime = ApplicationConfig.ParseDatabaseDate(reader.GetString(3)),
+                            difference = virtualCounter - realCounter
+                        });
                     }
                 }
-
-
-
             }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-            finally
-            {
-                dr?.Close();
-                connection?.Close();
-
-            }
-
             return result;
         }
-        public void InsertGasImproovement(double realcouter,double virtualcounter,DateTime dt)
+
+        public void InsertGasImproovement(double realcouter, double virtualcounter, DateTime dt)
         {
-            string cmdText = "INSERT INTO GasDataCollectionImprooved (realcounter,virtualcounter,createddatetime) VALUES(@realcounter,@virtualcounter,@createddatetime)   ";
-
-            try
+            using (var connection = CreateConnection())
+            using (var command = new SQLiteCommand(
+                "INSERT INTO GasDataCollectionImprooved (realcounter,virtualcounter,createddatetime) " +
+                "VALUES(@realcounter,@virtualcounter,@createddatetime)", connection))
             {
-                //double maxTimeStamp = GetMaxTimeStampId();
                 connection.Open();
-
-               
-                    SQLiteCommand insert = new SQLiteCommand(cmdText, connection);
-                    insert.Parameters.Add("@realcounter", System.Data.DbType.Double).Value = realcouter;
-                    insert.Parameters.Add("@createddatetime", System.Data.DbType.String).Value = dt.ToString();
-                    insert.Parameters.Add("@virtualcounter", System.Data.DbType.Double).Value = virtualcounter;
-                    insert.ExecuteNonQuery();
-
+                command.Parameters.Add("@realcounter", DbType.Double).Value = realcouter;
+                command.Parameters.Add("@virtualcounter", DbType.Double).Value = virtualcounter;
+                command.Parameters.Add("@createddatetime", DbType.String).Value = dt.ToString();
+                command.ExecuteNonQuery();
             }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-            finally
-            {
-                connection?.Close();
-            }
-
         }
-
     }
 }
