@@ -218,7 +218,6 @@
             this.barButtonItem1.Id = 2;
             this.barButtonItem1.ImageOptions.SvgImage = ((DevExpress.Utils.Svg.SvgImage)(resources.GetObject("barButtonItem1.ImageOptions.SvgImage")));
             this.barButtonItem1.Name = "barButtonItem1";
-            this.barButtonItem1.ItemClick += new DevExpress.XtraBars.ItemClickEventHandler(this.barButtonItem1_ItemClick);
             // 
             // btnLoadData
             // 
@@ -328,7 +327,6 @@
             this.ribbonPageGroup1.ItemLinks.Add(this.btnGetTemperatures);
             this.ribbonPageGroup1.ItemLinks.Add(this.btnPricesSettings);
             this.ribbonPageGroup1.ItemLinks.Add(this.btnAddVirtualGasCollection);
-            this.ribbonPageGroup1.ItemLinks.Add(this.barButtonItem1);
             this.ribbonPageGroup1.ItemLinks.Add(this.btnClose);
             this.ribbonPageGroup1.Name = "ribbonPageGroup1";
             this.ribbonPageGroup1.Text = "Ogólne";

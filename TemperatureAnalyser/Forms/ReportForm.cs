@@ -1,20 +1,26 @@
 ﻿using DevExpress.XtraCharts;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace TemperatureAnalyser.Forms
 {
     public partial class ReportForm : DevExpress.XtraEditors.XtraForm
     {
-        ApplicationConfig apc = new ApplicationConfig();
+        private readonly ApplicationConfig apc = new ApplicationConfig();
+        private CancellationTokenSource loadingCancellation;
+        private bool closeRequested;
         public DateTime dStartDate ;
         public DateTime dEndDate; 
         public ReportForm()
         {
             InitializeComponent();
+            FormClosing += ReportForm_FormClosing;
         }
 
-        private void ReportForm_Load(object sender, EventArgs e)
+        private async void ReportForm_Load(object sender, EventArgs e)
         {
             splitContainerControl1.Dock = System.Windows.Forms.DockStyle.Fill;
 
@@ -24,14 +30,59 @@ namespace TemperatureAnalyser.Forms
 
             splitContainerControl1.SplitterPosition = (this.Height * 80) / 100;
             splitContainerControl1.IsSplitterFixed = true;
-            var temperatureData = apc.GetTemperatures(dStartDate,dEndDate);
-            var gasData = apc.GetGasUsage(dStartDate,dEndDate);
-
-            DrawChart(temperatureData, gasData);
-
+            using (var cancellation = new CancellationTokenSource())
+            {
+                loadingCancellation = cancellation;
+                UseWaitCursor = true;
+                try
+                {
+                    var data = await Task.Run(() =>
+                    {
+                        var temperatures = apc.GetTemperatures(dStartDate, dEndDate);
+                        var gas = apc.GetGasUsage(dStartDate, dEndDate);
+                        return new
+                        {
+                            Temperatures = temperatures,
+                            Gas = gas,
+                            Averages = apc.AvarageTemperatures(temperatures)
+                        };
+                    }, cancellation.Token);
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    DrawChart(data.Temperatures, data.Gas, data.Averages);
+                }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+                {
+                    // Wait for the database operation before closing the form.
+                }
+                catch (Exception ex)
+                {
+                    DevExpress.XtraEditors.XtraMessageBox.Show(
+                        "Nie udało się wczytać raportu. " + ex.Message, "BŁĄD",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    closeRequested = true;
+                }
+                finally
+                {
+                    loadingCancellation = null;
+                    UseWaitCursor = false;
+                    if (closeRequested)
+                        Close();
+                }
+            }
         }
 
-        private void DrawChart(List<DataCollector.TemperaturesData> temperarutesData, List<DataCollector.GasData> gasUsage)
+        private void ReportForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (loadingCancellation == null)
+                return;
+
+            closeRequested = true;
+            e.Cancel = true;
+            loadingCancellation.Cancel();
+        }
+
+        private void DrawChart(List<DataCollector.TemperaturesData> temperarutesData,
+            List<DataCollector.GasData> gasUsage, List<DataCollector.TemperaturesData> avaragesTemp)
         {
 
 
@@ -42,8 +93,6 @@ namespace TemperatureAnalyser.Forms
             Series tempSeries = new Series("Temperatura", ViewType.Line);
             Series gasSeries = new Series("Gas", ViewType.Line);
             Series avaragesTempSeries = new Series("Średnia temperatura", ViewType.Line);
-
-            var avaragesTemp = apc.AvarageTemperatures(temperarutesData);
 
             foreach (var item in temperarutesData)
             {

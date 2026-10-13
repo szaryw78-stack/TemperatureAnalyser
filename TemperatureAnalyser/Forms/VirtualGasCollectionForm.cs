@@ -27,14 +27,20 @@ namespace TemperatureAnalyser.Forms
 
         private void btnSaveButton_Click(object sender, EventArgs e)
         {
-            GasImprooved gi = new GasImprooved();
-            //double realCounter = Double.TryParse(tbRealCounter.Text, out double result);
-
-            gi.InsertGasImproovement(Convert.ToDouble(tbRealCounter.Text), Convert.ToDouble(tbVirtualCounter.Text), ((DateTime)dtCollectionDateTime.EditValue).Date);
-            XtraMessageBox.Show("Koniec");
-
-
-
+            try
+            {
+                var gi = new GasImprooved();
+                gi.InsertGasImproovement(Convert.ToDouble(tbRealCounter.Text),
+                    Convert.ToDouble(tbVirtualCounter.Text), ((DateTime)dtCollectionDateTime.EditValue).Date);
+                XtraMessageBox.Show("Dane zostały zapisane.");
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                XtraMessageBox.Show("Nie udało się zapisać danych. " + ex.Message,
+                    "BŁĄD", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
