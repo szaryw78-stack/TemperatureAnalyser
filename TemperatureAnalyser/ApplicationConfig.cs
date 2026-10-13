@@ -237,7 +237,7 @@ namespace TemperatureAnalyser
                     DateAndTime = date,
                     Temperature = Convert.ToDouble(fields[2].Replace('.', ',')),
                     Date = date.Date,
-                    TimeSpan = date.TimeOfDay
+                    TimeSpan = new TimeSpan(date.Hour, date.Minute, date.Second)
                 });
             }
             return result;
@@ -258,19 +258,18 @@ namespace TemperatureAnalyser
         public List<DataCollector.GasData> GetGasUsage()
         {
             return ReadGasUsage("SELECT " + GasColumns +
-                " FROM GasDataCollection ORDER BY collectiondatetime");
+                " FROM GasDataCollection");
         }
 
         public List<DataCollector.GasData> GetGasUsageBevorConterExchange()
         {
             return ReadGasUsage("SELECT " + GasColumns +
-                " FROM GasDataCollectionOld ORDER BY collectiondatetime");
+                " FROM GasDataCollectionOld");
         }
 
         public List<DataCollector.GasData> GetGasUsage(DateTime dStart, DateTime dEnd)
         {
-            return ReadGasUsage("SELECT " + GasColumns + " FROM GasDataCollection " +
-                "ORDER BY collectiondatetime", dStart, dEnd);
+            return ReadGasUsage("SELECT " + GasColumns + " FROM GasDataCollection", dStart, dEnd);
         }
 
         private List<DataCollector.GasData> ReadGasUsage(
@@ -422,23 +421,10 @@ namespace TemperatureAnalyser
 
         private DataCollector.GasData GetLastCollectionGasCounter()
         {
-            using (var connection = CreateConnection())
-            using (var command = new SQLiteCommand(
-                "SELECT MAX(collectiondatetime),MAX(value) FROM GasDataCollection", connection))
-            {
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    if (!reader.Read() || reader.IsDBNull(1))
-                        throw new InvalidOperationException("Brak poprzedniego odczytu licznika gazu.");
-
-                    return new DataCollector.GasData
-                    {
-                        CollectionDatetime = reader.IsDBNull(0) ? new DateTime(2000, 1, 1) : ParseDatabaseDate(reader.GetString(0)),
-                        Value = reader.GetDouble(1)
-                    };
-                }
-            }
+            var last = GetGasUsage().LastOrDefault();
+            if (last == null)
+                throw new InvalidOperationException("Brak poprzedniego odczytu licznika gazu.");
+            return last;
         }
 
         public List<DataCollector.Prices> GetPrices(DateTime datetime)

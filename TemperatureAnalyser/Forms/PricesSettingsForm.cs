@@ -43,6 +43,8 @@ namespace TemperatureAnalyser.Forms
         {
             try
             {
+                dgwPricesView.CloseEditor();
+                dgwPricesView.UpdateCurrentRow();
                 var prices = new List<DataCollector.Prices>();
                 foreach (int handle in dgwPricesView.GetSelectedRows())
                 {

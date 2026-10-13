@@ -30,6 +30,7 @@ internal static class PerformanceRegressionTests
             TestTemperatureImport();
             TestBatchRollback();
             TestGasAndPrices();
+            TestDateRanges();
             TestAverages();
             TestRestAsync().GetAwaiter().GetResult();
             Console.WriteLine("All performance regression checks passed.");
@@ -133,7 +134,7 @@ internal static class PerformanceRegressionTests
         Config.InsertGasUsage(new List<GasData> { Gas(dates[0], 100), Gas(dates[1], 110), Gas(dates[2], 125) });
         var gas = Config.GetGasUsage();
         Assert(gas[0].Usage == 10 && gas[1].Usage == 15 && gas[2].Usage == 0, "Existing usage assignment");
-        Assert(Config.GetGasUsage(dates[0], dates[1]).Count == 2, "Range parameters are bound");
+        Assert(Config.GetGasUsage(dates[0], dates[1]).Count == 2, "Inclusive gas date range");
         Expect<InvalidOperationException>(() => Config.GasUsageAndPriceCalculation(dates[0]));
         Config.InsertPrices(new List<Prices>
         {
@@ -203,6 +204,33 @@ internal static class PerformanceRegressionTests
         Assert(Config.AvarageTemperatures(new List<TemperaturesData>()).Count == 0, "Empty averages");
     }
 
+    private static void TestDateRanges()
+    {
+        Execute("DELETE FROM GasDataCollection; DELETE FROM TemperatureData;");
+        Config.InsertGasUsage(new List<GasData>
+        {
+            Gas(new DateTime(2026, 1, 31), 100),
+            Gas(new DateTime(2026, 2, 1), 105),
+            Gas(new DateTime(2026, 2, 2), 110)
+        });
+        var crossMonth = Config.GetGasUsage(new DateTime(2026, 1, 31), new DateTime(2026, 2, 1));
+        Assert(crossMonth.Count == 2 && crossMonth[0].Usage == 5, "Gas range across months");
+        Execute(@"UPDATE GasDataCollection SET collectiondatetime='2026-02-01 00:00:00' WHERE value=105;
+            INSERT INTO TemperatureData(timestamp,datetime,value) VALUES
+            (1,'31.01.2026 23:00:00',10),
+            (2,'2026-02-01 01:00:00',20),
+            (3,'2026-02-02 00:00:00',30);");
+        Assert(Config.GetGasUsage(new DateTime(2026, 1, 31), new DateTime(2026, 2, 1)).Count == 2,
+            "Mixed-format gas range");
+        var temperatures = Config.GetTemperatures(new DateTime(2026, 1, 31), new DateTime(2026, 2, 1, 1, 0, 0));
+        Assert(temperatures.Count == 2 && temperatures[0].TimeStamp == 2, "Mixed-format temperature range");
+        Assert(Config.GetTemperatures(new DateTime(2026, 2, 3), new DateTime(2026, 2, 4)).Count == 0,
+            "Empty temperature range");
+        var interpolation = Config.CalculateUsage(new DateTime(2026, 2, 4), 120, 0, 0, 0, "test");
+        Assert(interpolation.Count == 2 && interpolation[0].Value == 115 && interpolation[1].Value == 120,
+            "Existing daily interpolation");
+    }
+
     private static async Task TestRestAsync()
     {
         using (var client = new HttpClient(new FakeHandler()))
@@ -226,6 +254,26 @@ internal static class PerformanceRegressionTests
             try { await new RestInterfaceTemperatures(client).GetTemperaturesFromSuplaAsync(cancellation.Token); }
             catch (OperationCanceledException) { cancelled = true; }
             Assert(cancelled, "REST cancellation");
+        }
+        using (var cancellation = new CancellationTokenSource())
+        using (var client = new HttpClient(new DelayedHandler()))
+        {
+            var pending = new RestInterfaceTemperatures(client).GetTemperaturesFromSuplaAsync(cancellation.Token);
+            cancellation.Cancel();
+            bool cancelled = false;
+            try { await pending; }
+            catch (OperationCanceledException) { cancelled = true; }
+            Assert(cancelled, "In-flight REST cancellation");
+        }
+    }
+
+    private sealed class DelayedHandler : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request, CancellationToken token)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(1), token);
+            return new HttpResponseMessage(HttpStatusCode.OK);
         }
     }
 

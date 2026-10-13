@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <!-- Build with dotnet build tests\PerformanceRegressionTests.csproj -c Release.
+       Run tests\bin\Release\net46\PerformanceRegressionTests.exe.
+       Override DevExpressDirectory when DevExpress is installed elsewhere.
+       The runner uses its own temporary database and never contacts Supla. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net46</TargetFramework>

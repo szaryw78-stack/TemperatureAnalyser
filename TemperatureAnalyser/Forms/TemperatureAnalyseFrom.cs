@@ -74,10 +74,10 @@ namespace TemperatureAnalyser
                 }
                 finally
                 {
-                    operationCancellation = null;
                     UseWaitCursor = false;
                     ribbonControl1.Enabled = true;
                     dgwAvarageTemperatures.Enabled = true;
+                    operationCancellation = null;
                     if (closeRequested)
                         Close();
                 }

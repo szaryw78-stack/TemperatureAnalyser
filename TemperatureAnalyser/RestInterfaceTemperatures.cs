@@ -20,7 +20,9 @@ namespace TemperatureAnalyser
 
         internal RestInterfaceTemperatures(HttpClient client)
         {
-            this.client = client ?? throw new ArgumentNullException(nameof(client));
+            if (client == null)
+                throw new ArgumentNullException(nameof(client));
+            this.client = client;
         }
 
         public async Task<List<DataCollector.TemperaturesData>> GetTemperaturesFromSuplaAsync(
